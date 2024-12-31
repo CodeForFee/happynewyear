@@ -230,6 +230,11 @@
 
     <div class="text-center container-bg p-8 rounded-lg shadow-lg">
 
+        <div id="progressContainer" class="w-full bg-gray-700 rounded-full h-8 mb-4 relative">
+            <div id="progressBar" class="bg-blue-500 h-8 rounded-full transition-all duration-300 ease-in-out" style="width: 0%"></div>
+            <div id="progressText" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg">0%</div>
+        </div>
+
         <div id="currentTime" class="text-2xl mb-4 font-semibold"></div>
 
         <div class="flex justify-center space-x-4 mb-8">
@@ -245,11 +250,6 @@
         </div>
 
         <h1 id="newYearMessage" class="text-5xl font-bold mb-8 hidden animate-bounce highlight">Happy New Year 2025</h1>
-
-        <div id="progressContainer" class="w-full bg-gray-700 rounded-full h-8 mb-4 relative">
-            <div id="progressBar" class="bg-blue-500 h-8 rounded-full transition-all duration-300 ease-in-out" style="width: 0%"></div>
-            <div id="progressText" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg">0%</div>
-        </div>
 
     </div>
 
