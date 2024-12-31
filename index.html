@@ -187,6 +187,39 @@
             }
         }
 
+        #progressText {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .scale-125 {
+            transform: translate(-50%, -50%) scale(1.25) !important;
+        }
+        
+        @media screen and (max-width: 768px) {
+            #progressContainer {
+                height: 24px !important;
+            }
+            #progressBar {
+                height: 24px !important;
+            }
+            #progressText {
+                font-size: 14px !important;
+            }
+        }
+        
+        @media screen and (max-width: 375px) {
+            #progressContainer {
+                height: 20px !important;
+            }
+            #progressBar {
+                height: 20px !important;
+            }
+            #progressText {
+                font-size: 12px !important;
+            }
+        }
+
     </style>
 
 </head>
@@ -213,10 +246,9 @@
 
         <h1 id="newYearMessage" class="text-5xl font-bold mb-8 hidden animate-bounce highlight">Happy New Year 2025</h1>
 
-        <div id="progressContainer" class="w-full bg-gray-700 rounded-full h-4 mb-4 hidden">
-
-            <div id="progressBar" class="bg-blue-500 h-4 rounded-full" style="width: 0%;"></div>
-
+        <div id="progressContainer" class="w-full bg-gray-700 rounded-full h-8 mb-4 relative">
+            <div id="progressBar" class="bg-blue-500 h-8 rounded-full transition-all duration-300 ease-in-out" style="width: 0%"></div>
+            <div id="progressText" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg">0%</div>
         </div>
 
     </div>
