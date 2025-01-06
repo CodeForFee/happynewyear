@@ -10,24 +10,24 @@ function updateCountdown() {
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-    // Cập nhật progress bar
-    const totalSeconds = Math.floor(distance / 1000);
-    const totalSecondsInYear = 365 * 24 * 60 * 60;
-    const progress = 100 - ((totalSeconds / totalSecondsInYear) * 100);
-    
-    document.getElementById('progressBar').style.width = progress + '%';
-    document.getElementById('progressText').textContent = Math.floor(progress) + '%';
-
-    // Hiệu ứng scale khi đạt mốc phần trăm chẵn
-    if (Math.floor(progress) % 10 === 0 && Math.floor(progress) > 0) {
-        document.getElementById('progressText').classList.add('scale-125');
-        setTimeout(() => {
-            document.getElementById('progressText').classList.remove('scale-125');
-        }, 200);
-    }
-
     // Hiển thị countdown
     if (distance > 0) {
+        // Cập nhật progress bar
+        const totalSeconds = Math.floor(distance / 1000);
+        const totalSecondsInYear = 365 * 24 * 60 * 60;
+        const progress = 100 - ((totalSeconds / totalSecondsInYear) * 100);
+        
+        document.getElementById('progressBar').style.width = progress + '%';
+        document.getElementById('progressText').textContent = Math.floor(progress) + '%';
+
+        // Hiệu ứng scale khi đạt mốc phần trăm chẵn
+        if (Math.floor(progress) % 10 === 0 && Math.floor(progress) > 0) {
+            document.getElementById('progressText').classList.add('scale-125');
+            setTimeout(() => {
+                document.getElementById('progressText').classList.remove('scale-125');
+            }, 200);
+        }
+
         document.getElementById('days').innerHTML = `${days}<br><span class="text-sm">Days</span>`;
         document.getElementById('hours').innerHTML = `${hours}<br><span class="text-sm">Hours</span>`;
         document.getElementById('minutes').innerHTML = `${minutes}<br><span class="text-sm">Minutes</span>`;
@@ -38,6 +38,10 @@ function updateCountdown() {
     } else {
         // Khi đã qua năm 2025
         clearInterval(countdownInterval);
+        
+        // Set progress bar to 100%
+        document.getElementById('progressBar').style.width = '100%';
+        document.getElementById('progressText').textContent = '100%';
         
         // Hiển thị message và hiệu ứng
         document.getElementById('newYearMessage').classList.remove('hidden');
