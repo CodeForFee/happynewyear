@@ -1,6 +1,6 @@
 function updateCountdown() {
     const currentTime = new Date();
-    const newYear = new Date('January 1, 2025 00:00:00').getTime();
+    const newYear = new Date('January 23, 2025 22:01:00').getTime();
     const now = currentTime.getTime();
     const distance = newYear - now;
 
