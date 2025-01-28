@@ -50,10 +50,12 @@ function initAudio() {
 
 function loadSettings() {
     try {
-         const DEFAULT_MUSIC_URL = './music1';
+        // Default music URL - thay link nhạc của bạn vào đây
+        const DEFAULT_MUSIC_URL = './music1';
+        
         const settings = JSON.parse(localStorage.getItem('newYearSettings') || '{}');
         
-        // Handle background loading
+        // Load background
         if (settings.backgroundUrl) {
             const bgImage = new Image();
             bgImage.onload = () => {
@@ -66,31 +68,17 @@ function loadSettings() {
             bgImage.src = settings.backgroundUrl;
         }
         
-        // Improved music loading
+        // Load music with fallback to default
+        const audio = document.getElementById('lunarMusic');
         if (settings.musicUrl) {
-            const audio = document.getElementById('lunarMusic');
-            
-            // Reset audio context and connections
-            if (audioContext) {
-                audioContext.close().then(() => {
-                    audioContext = null;
-                    initAudio(); // Reinitialize audio after reset
-                });
-            }
-            
             audio.src = settings.musicUrl;
-            
-            // Ensure proper loading
-            audio.load();
-            
-            // Add loading indicator
-            showNotification('Đang tải nhạc...', 'info');
-            
-            audio.addEventListener('canplaythrough', () => {
-                showNotification('Đã tải xong nhạc', 'info');
-            }, { once: true });
+        } else {
+            // Sử dụng link nhạc mặc định nếu không có setting
+            audio.src = DEFAULT_MUSIC_URL;
         }
+        audio.load(); // Preload the audio
 
+        // Load custom theme if available
         if (settings.theme) {
             applyTheme(settings.theme);
         }
