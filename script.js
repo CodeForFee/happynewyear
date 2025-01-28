@@ -9,14 +9,42 @@ let audioSource;
 
 function initAudio() {
     try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Only create new audio context if it doesn't exist
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        // Reset audio nodes
+        if (audioSource) {
+            audioSource.disconnect();
+        }
+        if (audioAnalyser) {
+            audioAnalyser.disconnect();
+        }
+
         audioAnalyser = audioContext.createAnalyser();
         const audio = document.getElementById('lunarMusic');
-        audioSource = audioContext.createMediaElementSource(audio);
-        audioSource.connect(audioAnalyser);
-        audioAnalyser.connect(audioContext.destination);
+        
+        // Important: Only create media element source if audio is properly loaded
+        audio.addEventListener('canplaythrough', () => {
+            try {
+                audioSource = audioContext.createMediaElementSource(audio);
+                audioSource.connect(audioAnalyser);
+                audioAnalyser.connect(audioContext.destination);
+            } catch (error) {
+                console.error('Error connecting audio source:', error);
+                showNotification('Lỗi kết nối âm thanh', 'error');
+            }
+        }, { once: true }); // Only trigger once
+
+        // Add error handling for audio loading
+        audio.addEventListener('error', (e) => {
+            console.error('Audio loading error:', e);
+            showNotification('Không thể tải file nhạc', 'error');
+        });
     } catch (error) {
         console.error('Audio initialization failed:', error);
+        showNotification('Khởi tạo âm thanh thất bại', 'error');
     }
 }
 
@@ -24,6 +52,7 @@ function loadSettings() {
     try {
         const settings = JSON.parse(localStorage.getItem('newYearSettings') || '{}');
         
+        // Handle background loading
         if (settings.backgroundUrl) {
             const bgImage = new Image();
             bgImage.onload = () => {
@@ -31,19 +60,36 @@ function loadSettings() {
             };
             bgImage.onerror = () => {
                 console.error('Background image failed to load');
-                // Fallback to default background
                 document.querySelector('.background-image').style.backgroundImage = 'url("default-bg.jpg")';
             };
             bgImage.src = settings.backgroundUrl;
         }
         
+        // Improved music loading
         if (settings.musicUrl) {
             const audio = document.getElementById('lunarMusic');
+            
+            // Reset audio context and connections
+            if (audioContext) {
+                audioContext.close().then(() => {
+                    audioContext = null;
+                    initAudio(); // Reinitialize audio after reset
+                });
+            }
+            
             audio.src = settings.musicUrl;
-            audio.load(); // Preload the audio
+            
+            // Ensure proper loading
+            audio.load();
+            
+            // Add loading indicator
+            showNotification('Đang tải nhạc...', 'info');
+            
+            audio.addEventListener('canplaythrough', () => {
+                showNotification('Đã tải xong nhạc', 'info');
+            }, { once: true });
         }
 
-        // Load custom theme if available
         if (settings.theme) {
             applyTheme(settings.theme);
         }
@@ -52,6 +98,7 @@ function loadSettings() {
         showNotification('Lỗi tải cài đặt', 'error');
     }
 }
+
 
 function applyTheme(theme) {
     const root = document.documentElement;
@@ -262,38 +309,54 @@ function toggleMusic() {
     const audio = document.getElementById('lunarMusic');
     const musicIcon = document.getElementById('musicPath');
     
+    if (!audio.src) {
+        showNotification('Chưa có file nhạc nào được tải', 'error');
+        return;
+    }
+    
     if (isMusicPlaying) {
         audio.pause();
         musicIcon.setAttribute('d', 'M15.536 8.464a5 5 0 010 7.072M12 18.364a3 3 0 010-4.243M18.364 5.636a8 8 0 010 11.314');
+        isMusicPlaying = false;
     } else {
+        // Resume AudioContext if suspended
         if (audioContext?.state === 'suspended') {
             audioContext.resume();
         }
+        
+        // Play with proper error handling
         audio.play().then(() => {
             musicIcon.setAttribute('d', 'M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z');
             isMusicPlaying = true;
         }).catch(e => {
             console.error('Audio play failed:', e);
-            showNotification('Không thể phát nhạc', 'error');
+            showNotification('Không thể phát nhạc - ' + e.message, 'error');
             isMusicPlaying = false;
         });
     }
-    isMusicPlaying = !isMusicPlaying;
 }
 
 function autoPlayMusic() {
     const audio = document.getElementById('lunarMusic');
+    
+    if (!audio.src) {
+        console.error('No music source set');
+        showNotification('Chưa có file nhạc nào được tải', 'error');
+        return;
+    }
+    
     if (audioContext?.state === 'suspended') {
         audioContext.resume();
     }
+    
     audio.play().catch(e => {
         console.error('Auto play failed:', e);
-        showNotification('Tự động phát nhạc thất bại', 'error');
+        showNotification('Tự động phát nhạc thất bại - ' + e.message, 'error');
     });
+    
     isMusicPlaying = true;
     document.getElementById('musicPath').setAttribute('d', 'M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z');
 }
-
 // Greetings function
 function showGreeting() {
     try {
