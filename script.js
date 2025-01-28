@@ -7,29 +7,70 @@ let audioContext;
 let audioAnalyser;
 let audioSource;
 
+// Khởi tạo AudioContext chỉ sau khi có sự kiện người dùng
 function initAudio() {
-    try {
-        if (!audioContext) {
+    if (!audioContext) {
+        try {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (error) {
+            console.error('AudioContext không thể khởi tạo:', error);
         }
-        
-        if (audioSource) {
-            audioSource.disconnect();
-        }
-        if (audioAnalyser) {
-            audioAnalyser.disconnect();
-        }
-
-        audioAnalyser = audioContext.createAnalyser();
-        const audio = document.getElementById('lunarMusic');
-        audioSource = audioContext.createMediaElementSource(audio);
-        audioSource.connect(audioAnalyser);
-        audioAnalyser.connect(audioContext.destination);
-    } catch (error) {
-        console.error('Audio initialization failed:', error);
-        showNotification('Khởi tạo âm thanh thất bại', 'error');
     }
 }
+
+// Bắt đầu phát nhạc sau khi khởi tạo AudioContext
+function playMusic() {
+    const audio = document.getElementById('lunarMusic');
+    const musicIcon = document.getElementById('musicPath');
+
+    if (!audioContext) {
+        showNotification('AudioContext chưa được khởi tạo', 'error');
+        return;
+    }
+
+    if (isMusicPlaying) {
+        audio.pause();
+        musicIcon.setAttribute('d', 'M15.536 8.464a5 5 0 010 7.072M12 18.364a3 3 0 010-4.243M18.364 5.636a8 8 0 010 11.314');
+        isMusicPlaying = false;
+    } else {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().then(() => {
+                audio.play().then(() => {
+                    musicIcon.setAttribute('d', 'M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z');
+                    isMusicPlaying = true;
+                }).catch(error => {
+                    console.error('Không thể phát nhạc:', error);
+                    showNotification('Không thể phát nhạc', 'error');
+                });
+            });
+        } else {
+            audio.play().then(() => {
+                musicIcon.setAttribute('d', 'M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z');
+                isMusicPlaying = true;
+            }).catch(error => {
+                console.error('Không thể phát nhạc:', error);
+                showNotification('Không thể phát nhạc', 'error');
+            });
+        }
+    }
+}
+
+// Gán sự kiện để đảm bảo AudioContext được kích hoạt sau khi tương tác
+document.addEventListener('DOMContentLoaded', () => {
+    const startButton = document.getElementById('startButton');
+
+    startButton.addEventListener('click', () => {
+        initAudio(); // Khởi tạo AudioContext
+        showNotification('Âm thanh đã được kích hoạt', 'info');
+    });
+
+    // Tải các thiết lập và cập nhật đếm ngược
+    loadSettings();
+    updateCountdown();
+
+    // Đếm ngược mỗi giây
+    setInterval(updateCountdown, 1000);
+});
 
 
 function loadSettings() {
