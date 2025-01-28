@@ -1,8 +1,37 @@
+let isFireworksActive = false;
+let isMusicPlaying = false;
+const fireworks = [];
+
+function loadSettings() {
+    const settings = JSON.parse(localStorage.getItem('newYearSettings') || '{}');
+    
+    // Cập nhật background
+    if (settings.backgroundUrl) {
+        document.querySelector('.background-image').style.backgroundImage = `url('${settings.backgroundUrl}')`;
+    }
+    
+    // Cập nhật music source
+    if (settings.musicUrl) {
+        const audio = document.getElementById('lunarMusic');
+        audio.src = settings.musicUrl;
+    }
+}
+
 function updateCountdown() {
+    // Lấy target date từ settings
+    const settings = JSON.parse(localStorage.getItem('newYearSettings') || '{}');
+    const targetDate = settings.targetDateTime 
+        ? new Date(settings.targetDateTime) 
+        : new Date('2025-29-01T00:00:00');
+    
     const currentTime = new Date();
-    const newYear = new Date('January 23, 2025 22:01:00').getTime();
+    const startOfYear = new Date(currentTime.getFullYear(), 0, 1);
+    const totalDuration = targetDate.getTime() - startOfYear.getTime();
+    const elapsed = currentTime.getTime() - startOfYear.getTime();
+    const progress = (elapsed / totalDuration) * 100;
+
     const now = currentTime.getTime();
-    const distance = newYear - now;
+    const distance = targetDate.getTime() - now;
 
     // Tính toán thời gian
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -10,15 +39,14 @@ function updateCountdown() {
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
+    // Cập nhật tiêu đề trang
+    document.getElementById('newYearMessage').textContent = `Happy New Year ${targetDate.getFullYear()}`;
+
     // Hiển thị countdown
     if (distance > 0) {
         // Cập nhật progress bar
-        const totalSeconds = Math.floor(distance / 1000);
-        const totalSecondsInYear = 365 * 24 * 60 * 60;
-        const progress = 100 - ((totalSeconds / totalSecondsInYear) * 100);
-        
-        document.getElementById('progressBar').style.width = progress + '%';
-        document.getElementById('progressText').textContent = Math.floor(progress) + '%';
+        document.getElementById('progressBar').style.width = `${Math.min(progress, 100)}%`;
+        document.getElementById('progressText').textContent = `${Math.min(Math.floor(progress), 100)}%`;
 
         // Hiệu ứng scale khi đạt mốc phần trăm chẵn
         if (Math.floor(progress) % 10 === 0 && Math.floor(progress) > 0) {
@@ -36,7 +64,7 @@ function updateCountdown() {
         // Hiển thị thời gian hiện tại
         document.getElementById('currentTime').textContent = currentTime.toLocaleTimeString();
     } else {
-        // Khi đã qua năm 2025
+        // Khi đã qua thời gian đích
         clearInterval(countdownInterval);
         
         // Set progress bar to 100%
@@ -45,15 +73,13 @@ function updateCountdown() {
         
         // Hiển thị message và hiệu ứng
         document.getElementById('newYearMessage').classList.remove('hidden');
-        startFireworks();
         
-        // Phát nhạc
-        const audio = document.getElementById('lunarMusic');
-        if (audio) {
-            audio.play().catch(e => console.log('Audio play failed:', e));
+        // Chỉ bật pháo hoa, không tự động phát nhạc
+        if (!isFireworksActive) {
+            startFireworks();
         }
 
-        // Format ngày tháng năm 2025
+        // Format ngày tháng năm target
         const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
             weekday: 'long',
             year: 'numeric',
@@ -70,10 +96,10 @@ function updateCountdown() {
         document.getElementById('minutes').innerHTML = '0<br><span class="text-sm">Minutes</span>';
         document.getElementById('seconds').innerHTML = '0<br><span class="text-sm">Seconds</span>';
         
-        // Hiển thị ngày tháng năm 2025
+        // Hiển thị ngày giờ target
         document.getElementById('currentTime').innerHTML = `
             <div class="text-xl font-bold text-yellow-300">
-                ${dateFormatter.format(new Date('January 1, 2025'))}
+                ${dateFormatter.format(targetDate)}
             </div>
         `;
     }
@@ -185,9 +211,6 @@ class Particle {
     }
 }
 
-const fireworks = [];
-let isFireworksActive = false;
-
 function startFireworks() {
     isFireworksActive = true;
     if (fireworks.length === 0) {
@@ -216,4 +239,87 @@ function animate() {
     });
 
     requestAnimationFrame(animate);
+}
+
+// Thêm function để xử lý lời chúc
+function getRandomGreeting(name, birthYear) {
+    const greetings = JSON.parse(localStorage.getItem('greetings') || '[]');
+    console.log('Available greetings:', greetings); // Để debug
+    
+    if (greetings.length === 0) {
+        return `Chúc mừng năm mới ${name}! Chúc bạn một năm mới tràn đầy hạnh phúc và thành công.`;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * greetings.length);
+    const template = greetings[randomIndex];
+    const age = 2025 - parseInt(birthYear);
+    
+    const result = template
+        .replace(/{name}/g, name)
+        .replace(/{year}/g, birthYear)
+        .replace(/{age}/g, age);
+        
+    console.log('Final greeting:', result); // Để debug
+    return result;
+}
+
+// Gọi loadSettings khi trang được tải
+document.addEventListener('DOMContentLoaded', loadSettings);
+
+function toggleFireworks() {
+    if (isFireworksActive) {
+        stopFireworks();
+    } else {
+        startFireworks();
+    }
+}
+
+function toggleMusic() {
+    const audio = document.getElementById('lunarMusic');
+    const musicIcon = document.getElementById('musicPath');
+    
+    if (isMusicPlaying) {
+        audio.pause();
+        musicIcon.setAttribute('d', 'M15.536 8.464a5 5 0 010 7.072M12 18.364a3 3 0 010-4.243M18.364 5.636a8 8 0 010 11.314');
+    } else {
+        // Thêm xử lý lỗi khi play
+        audio.play().then(() => {
+            musicIcon.setAttribute('d', 'M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z');
+            isMusicPlaying = true;
+        }).catch(e => {
+            console.log('Audio play failed:', e);
+            // Giữ nguyên icon khi không phát được nhạc
+            isMusicPlaying = false;
+        });
+    }
+    isMusicPlaying = !isMusicPlaying;
+}
+
+function autoPlayMusic() {
+    const audio = document.getElementById('lunarMusic');
+    audio.play().catch(e => console.log('Auto play failed:', e));
+    isMusicPlaying = true;
+    document.getElementById('musicPath').setAttribute('d', 'M5.586 15H4a1 1 0 01-1-1V10a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z');
+}
+
+// Giữ lại phần showGreeting trong index.html
+function showGreeting() {
+    const greetings = JSON.parse(localStorage.getItem('greetings') || '[]');
+    let greeting;
+    
+    if (greetings.length === 0) {
+        greeting = "Chúc mừng năm mới! Chúc bạn một năm mới tràn đầy hạnh phúc và thành công.";
+    } else {
+        const randomIndex = Math.floor(Math.random() * greetings.length);
+        greeting = greetings[randomIndex];
+    }
+    
+    const greetingDiv = document.getElementById('personalGreeting');
+    greetingDiv.style.opacity = '0';
+    greetingDiv.classList.remove('hidden');
+    
+    setTimeout(() => {
+        greetingDiv.textContent = greeting;
+        greetingDiv.style.opacity = '1';
+    }, 200);
 }
