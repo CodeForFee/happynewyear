@@ -71,8 +71,35 @@ function applyTheme(theme) {
 
 function getDefaultTargetDate() {
     const now = new Date();
-    const nextYear = now.getFullYear() + 1;
-    return new Date(`${nextYear}-01-29T00:00:00`); // Default to next Lunar New Year
+    const currentYear = now.getFullYear();
+    
+    // Define Lunar New Year dates for upcoming years (Gregorian calendar)
+    const lunarNewYearDates = {
+        2025: new Date('2025-01-29T00:00:00'), // Year of the Snake
+        2026: new Date('2026-02-17T00:00:00'), // Year of the Dragon
+        2027: new Date('2027-02-06T00:00:00'), // Year of the Horse
+        2028: new Date('2028-01-26T00:00:00'), // Year of the Sheep
+        2029: new Date('2029-02-13T00:00:00')  // Year of the Monkey
+    };
+    
+    // Find the next Lunar New Year date
+    let targetYear = currentYear;
+    let targetDate = lunarNewYearDates[targetYear];
+    
+    // If current date is past this year's Lunar New Year, get next year's date
+    while (targetDate && now > targetDate) {
+        targetYear++;
+        targetDate = lunarNewYearDates[targetYear];
+    }
+    
+    // If no future date found in our predefined dates, use default calculation
+    if (!targetDate) {
+        console.warn('No predefined Lunar New Year date found for year ' + targetYear);
+        // Default to Jan 29th of next year as a fallback
+        targetDate = new Date(`${targetYear}-01-29T00:00:00`);
+    }
+    
+    return targetDate;
 }
 
 function updateCountdown() {
