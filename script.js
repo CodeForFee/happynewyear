@@ -50,6 +50,7 @@ function initAudio() {
 
 function loadSettings() {
     try {
+         const DEFAULT_MUSIC_URL = './music1';
         const settings = JSON.parse(localStorage.getItem('newYearSettings') || '{}');
         
         // Handle background loading
